@@ -69,9 +69,5 @@ public class PMIModel implements WordAligner {
           parallelCounts.incrementCount("#NULL#", target, 1.0);
         }
     }
-
-    // Normalize
-    parallelCounts = Counters.conditionalNormalize(parallelCounts);
-    sourceWordCounts = Counters.normalize(sourceWordCounts);
   }
 }
