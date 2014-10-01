@@ -39,7 +39,7 @@ public class PMIModel implements WordAligner {
         double score = parallelCounts.getCount(source, target)/sourceWordCounts.getCount(source);
         if (score > currentBestScore) {
           currentBestScore = score;
-          bestIndex = currentIndex;
+          bestIndex =   ;
         }
         currentIndex++;
       }
@@ -69,9 +69,5 @@ public class PMIModel implements WordAligner {
           parallelCounts.incrementCount("#NULL#", target, 1.0);
         }
     }
-
-    // Normalize
-    parallelCounts = Counters.conditionalNormalize(parallelCounts);
-    sourceWordCounts = Counters.normalize(sourceWordCounts);
   }
 }
