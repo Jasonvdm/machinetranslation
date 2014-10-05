@@ -100,14 +100,14 @@ public class IBMModel1 implements WordAligner {
         for(String target : allTargets){
           numCounts++;
           double val = parallelCounts.getCount(source, target)/targetWordCounts.getCount(target);
-          
+
           double oldVal = tCounter.getCount(source,target);
           difference += Math.abs(val - oldVal);
-          tCounter.setCount(source, target, val);
+          if (val > 0) tCounter.setCount(source, target, val);
         }
       }
       //tCounter = Counters.conditionalNormalize(tCounter);
-      if(difference/numCounts <= 0.001) {
+      if(difference/numCounts <= 0.0001) {
         return;
       }
     }
@@ -119,12 +119,17 @@ public class IBMModel1 implements WordAligner {
       List<String> targetWords = pair.getTargetWords();
       List<String> sourceWords = pair.getSourceWords();
 
+      allSources.add("#NULL#");
       for (String source : sourceWords) {
         for (String target : targetWords) {
           allSources.add(source);
           allTargets.add(target);
           tCounter.setCount(source, target, 1.0);
         }
+      }
+
+      for (String target : allTargets) {
+        tCounter.setCount("#NULL#", target, 1.0);
       }
 
       // for(String source : sourceWords){
