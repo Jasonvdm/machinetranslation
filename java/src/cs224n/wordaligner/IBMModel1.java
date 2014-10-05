@@ -32,7 +32,7 @@ public class IBMModel1 implements WordAligner {
     List<String> sourceWords = sentencePair.getSourceWords();
     int targetIndex = 0;
     for (String target : targetWords) {
-      double currentBestScore = 0;
+      double currentBestScore = tCounter.getCount("#NULL#",target);
       int bestIndex = -1;
       int currentIndex = 0;
       for (String source : sourceWords) {
@@ -55,9 +55,9 @@ public class IBMModel1 implements WordAligner {
     System.out.println("Starting training now");
 
 
-    for(int iter = 0; iter < 50; iter++)
+    for(int iter = 0; iter < 1000; iter++)
     {
-      if(iter % 5 == 0) System.out.println(iter);
+      System.out.println(iter);
       parallelCounts = new CounterMap<String,String>();
       targetWordCounts = new Counter<String>();
       conditionalAlignmentCounts = new CounterMap<String,String>();
@@ -83,12 +83,37 @@ public class IBMModel1 implements WordAligner {
             //alignmentCounts.incrementCount("#"+i+","+targetWords.size()+","+sourceWords.size()+"#", delta);
           }
         }
+        String source = "#NULL#";
+        double deltDenom = 0;
+        for(String target : targetWords){
+          deltDenom += tCounter.getCount(source, target); 
+        }
+        int j = -1;
+        for(String target : targetWords){
+          j++;
+          double delta = tCounter.getCount(source, target)/deltDenom;
+          parallelCounts.incrementCount(source, target, delta);
+          //conditionalAlignmentCounts.incrementCount("#"+i+","+targetWords.size()+","+sourceWords.size()+"#", "#"+j+"#", delta);
+          //alignmentCounts.incrementCount("#"+i+","+targetWords.size()+","+sourceWords.size()+"#", delta);
+        }
       }
+      Counters.conditionalNormalize(parallelCounts);
+      Counters.normalize(targetWordCounts);
+      double difference = 0;
+      int numCounts = 0;
       for(String source : allSources){
         for(String target : allTargets){
+          numCounts++;
           double val = parallelCounts.getCount(source, target)/targetWordCounts.getCount(target);
+          double oldVal = tCounter.getCount(source,target);
+          difference += Math.abs(val - oldVal);
           tCounter.setCount(source, target, val);
         }
+      }
+      Counters.conditionalNormalize(tCounter);
+      if(difference/numCounts <= 0.00001) {
+        System.out.println("Ending training now");
+        return;
       }
     }
     System.out.println("Ending training now");
@@ -102,6 +127,7 @@ public class IBMModel1 implements WordAligner {
       for(String source : sourceWords){
         allSources.add(source);
       }
+      allSources.add("#NULL#");
       for(String target : targetWords){
         allTargets.add(target);
       }
