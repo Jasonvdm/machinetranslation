@@ -97,10 +97,11 @@ public class IBMModel1 implements WordAligner {
           //alignmentCounts.incrementCount("#"+i+","+targetWords.size()+","+sourceWords.size()+"#", delta);
         }
       }
-      Counters.conditionalNormalize(parallelCounts);
-      Counters.normalize(targetWordCounts);
+      //Counters.conditionalNormalize(parallelCounts);
+      //Counters.normalize(targetWordCounts);
       double difference = 0;
       int numCounts = 0;
+      System.out.println("Updating TCounter");
       for(String source : allSources){
         for(String target : allTargets){
           numCounts++;
@@ -110,8 +111,8 @@ public class IBMModel1 implements WordAligner {
           tCounter.setCount(source, target, val);
         }
       }
-      Counters.conditionalNormalize(tCounter);
-      if(difference/numCounts <= 0.00001) {
+      //Counters.conditionalNormalize(tCounter);
+      if(difference/numCounts <= 0.0001) {
         System.out.println("Ending training now");
         return;
       }
