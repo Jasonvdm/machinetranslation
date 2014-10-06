@@ -92,8 +92,8 @@ public class IBMModel1 implements WordAligner {
           //alignmentCounts.incrementCount("#"+i+","+targetWords.size()+","+sourceWords.size()+"#", delta);
         }
       }
-      parallelCounts = Counters.conditionalNormalize(parallelCounts);
-      targetWordCounts = Counters.normalize(targetWordCounts);
+      // parallelCounts = Counters.conditionalNormalize(parallelCounts);
+      // targetWordCounts = Counters.normalize(targetWordCounts);
       double difference = 0;
       int numCounts = 0;
       for(String source : allSources){
