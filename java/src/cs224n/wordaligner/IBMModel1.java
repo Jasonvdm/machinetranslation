@@ -103,11 +103,11 @@ public class IBMModel1 implements WordAligner {
 
           double oldVal = tCounter.getCount(source,target);
           difference += Math.abs(val - oldVal);
-          if (val > 0) tCounter.setCount(source, target, val);
+          if(val > 0 || tCounter.getCount(source, target) != 0) tCounter.setCount(source, target, val);
         }
       }
       //tCounter = Counters.conditionalNormalize(tCounter);
-      if(difference/numCounts <= 0.001) {
+      if(difference/numCounts <= 0.0001) {
         return;
       }
     }
@@ -145,6 +145,6 @@ public class IBMModel1 implements WordAligner {
     //     tCounter.setCount(source, target, 1.0);
     //   }
     // }
-    tCounter = Counters.conditionalNormalize(tCounter);
+    // tCounter = Counters.conditionalNormalize(tCounter);
   }
 }
