@@ -16,10 +16,6 @@ import java.util.*;
 public class IBMModel1 implements WordAligner {
 
   private static final long serialVersionUID = 1315751943476440515L;
-  private CounterMap<String,String> parallelCounts;
-  private Counter<String> targetWordCounts;
-  private CounterMap<String, String> conditionalAlignmentCounts;
-  private Counter<String> alignmentCounts;
   private CounterMap<String, String> tCounter;
   private HashSet<String> allTargets = new HashSet<String>();
   private HashSet<String> allSources = new HashSet<String>();
@@ -58,27 +54,17 @@ public class IBMModel1 implements WordAligner {
     for(int iter = 0; iter < 1000; iter++)
     {
       System.out.println(iter);
-      parallelCounts = new CounterMap<String,String>();
-      targetWordCounts = new Counter<String>();
-      conditionalAlignmentCounts = new CounterMap<String,String>();
-      alignmentCounts = new Counter<String>();
+      CounterMap<String, String> newTCounter = new CounterMap<String,String>();
       for(SentencePair pair : trainingPairs){
         List<String> targetWords = pair.getTargetWords();
         List<String> sourceWords = pair.getSourceWords();
-        // sourceWords.add("#{{{null}}}");
-        int i = -1;
-        for(String source : sourceWords){
-          i++;
+        for(String target : targetWords){
           double deltDenom = 0;
-          for(String target : targetWords){
+          for(String source : sourceWords){
             deltDenom += tCounter.getCount(source, target); 
           }
-          int j = -1;
           for(String target : targetWords){
-            j++;
             double delta = tCounter.getCount(source, target)/deltDenom;
-            parallelCounts.incrementCount(source, target, delta);
-            if(i == 0) targetWordCounts.incrementCount(target, delta);
             //conditionalAlignmentCounts.incrementCount("#"+i+","+targetWords.size()+","+sourceWords.size()+"#", "#"+j+"#", delta);
             //alignmentCounts.incrementCount("#"+i+","+targetWords.size()+","+sourceWords.size()+"#", delta);
           }
