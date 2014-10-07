@@ -50,7 +50,7 @@ public class IBMModel1 implements WordAligner {
 
   public void train(List<SentencePair> trainingPairs) {
     initializeT(trainingPairs);
-    for(int iter = 0; iter < 50; iter++)
+    for(int iter = 0; iter < 100; iter++)
     {
       System.out.println(iter);
       parallelCounts = new CounterMap<String,String>();
@@ -106,8 +106,9 @@ public class IBMModel1 implements WordAligner {
           if(val > 0 || tCounter.getCount(source, target) != 0) tCounter.setCount(source, target, val);
         }
       }
+      tCounter = Counters.conditionalNormalize(tCounter);
       //tCounter = Counters.conditionalNormalize(tCounter);
-      if(difference/numCounts <= 0.0001) {
+      if(difference/numCounts <= 0.0005) {
         return;
       }
     }
@@ -145,6 +146,6 @@ public class IBMModel1 implements WordAligner {
     //     tCounter.setCount(source, target, 1.0);
     //   }
     // }
-    // tCounter = Counters.conditionalNormalize(tCounter);
+    tCounter = Counters.conditionalNormalize(tCounter);
   }
 }

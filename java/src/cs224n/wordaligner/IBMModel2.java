@@ -24,8 +24,8 @@ public class IBMModel2 implements WordAligner {
   private CounterMap<String, String> qCounter;
   private HashSet<String> allTargets = new HashSet<String>();
   private HashSet<String> allSources = new HashSet<String>();
-  private int longestSource = 0;
-  private int longestTarget = 0;
+  private HashSet<Integer> sourceLengths = new HashSet<Integer>();
+  private HashSet<Integer> targetLengths = new HashSet<Integer>();
 
 
   public Alignment align(SentencePair sentencePair) {
@@ -107,19 +107,20 @@ public class IBMModel2 implements WordAligner {
       }
       // parallelCounts = Counters.conditionalNormalize(parallelCounts);
       // targetWordCounts = Counters.normalize(targetWordCounts);
-      double difference = 0;
       int numCounts = 0;
-      for(String source : allSources){
-        for(String target : allTargets){
-          numCounts++;
-          double val = parallelCounts.getCount(source, target)/targetWordCounts.getCount(target);
-          double oldVal = tCounter.getCount(source,target);
-          difference += Math.abs(val - oldVal);
-          if(val > 0 || tCounter.getCount(source, target) != 0) tCounter.setCount(source, target, val);
-        }
-      }
-      for(int m = 0; m <= longestSource; m++){
-        for(int l = 0; l <= longestTarget; l++){
+      double difference = 0;
+      // for(String source : allSources){
+      //   for(String target : allTargets){
+      //     numCounts++;
+      //     double val = parallelCounts.getCount(source, target)/targetWordCounts.getCount(target);
+      //     double oldVal = tCounter.getCount(source,target);
+      //     difference += Math.abs(val - oldVal);
+      //     if(val > 0 || tCounter.getCount(source, target) != 0) tCounter.setCount(source, target, val);
+      //   }
+      // }
+      
+      for(int m : sourceLengths){
+        for(int l : targetLengths){
           for(int i = -1; i <= m; i++){
             for(int j = 0; j <= l; j++){
               numCounts++;
@@ -210,8 +211,8 @@ public class IBMModel2 implements WordAligner {
     for(SentencePair pair : trainingPairs){
       List<String> targetWords = pair.getTargetWords();
       List<String> sourceWords = pair.getSourceWords();
-      longestSource = Math.max(sourceWords.size(), longestSource);
-      longestTarget = Math.max(targetWords.size(), longestTarget);
+      sourceLengths.add(sourceWords.size());
+      targetLengths.add(targetWords.size());
 
       allSources.add("#NULL#");
       for (String source : sourceWords) {
@@ -235,8 +236,8 @@ public class IBMModel2 implements WordAligner {
       // }
     }
 
-    for(int m = 0; m <= longestSource; m++){
-      for(int l = 0; l <= longestTarget; l++){
+    for(int m : sourceLengths){
+      for(int l : targetLengths){
         for(int i = -1; i <= m; i++){
           for(int j = 0; j <= l; j++){
             qCounter.setCount("#"+i+","+l+","+m+"#", "#"+j+"#", 1.0);
