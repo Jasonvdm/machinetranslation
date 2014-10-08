@@ -2,6 +2,7 @@ package cs224n.wordaligner;
 
 import cs224n.util.*;
 import java.util.*;
+import java.lang.*;
 
 /**
  * Simple word alignment baseline model that maps source positions to target 
@@ -38,13 +39,13 @@ public class IBMModel2 implements WordAligner {
     int j = -1;
     for (String target : targetWords) {
       j++;
-      double currentBestScore = qCounter.getCount("#-1,"+l+","+m+"#", "#"+j+"#")*tCounter.getCount("#NULL#",target);
+      double currentBestScore = Math.log(qCounter.getCount("#-1,"+l+","+m+"#", "#"+j+"#")) + Math.log(tCounter.getCount("#NULL#",target));
       int bestIndex = -1;
       int currentIndex = 0;
       int i = -1;
       for (String source : sourceWords) {
         i++;
-        double score = qCounter.getCount("#"+i+","+l+","+m+"#", "#"+j+"#")*tCounter.getCount(source,target);
+        double score = Math.log(qCounter.getCount("#"+i+","+l+","+m+"#", "#"+j+"#"))+Math.log(tCounter.getCount(source,target));
         if (score > currentBestScore) {
           currentBestScore = score;
           bestIndex = currentIndex;
@@ -62,80 +63,51 @@ public class IBMModel2 implements WordAligner {
     for(int iter = 0; iter < 50; iter++)
     {
       System.out.println(iter);
-      parallelCounts = new CounterMap<String,String>();
-      targetWordCounts = new Counter<String>();
-      conditionalAlignmentCounts = new CounterMap<String,String>();
-      alignmentCounts = new Counter<String>();
+      CounterMap<String, String> newTCounter = new CounterMap<String,String>();
+      CounterMap<String, String> newQCounter = new CounterMap<String,String>();
       for(SentencePair pair : trainingPairs){
         List<String> targetWords = pair.getTargetWords();
         List<String> sourceWords = pair.getSourceWords();
-        int i = -1;
-        for(String source : sourceWords){
-          i++;
+        int j = -1;
+        for(String target : targetWords){
+          j++;
           double deltDenom = 0;
-          int j = -1;
-          for(String target : targetWords){
-            j++;
+          int i = -1;
+          for(String source : sourceWords){
+            i++;
             deltDenom += qCounter.getCount("#"+i+","+targetWords.size()+","+sourceWords.size()+"#", "#"+j+"#")*tCounter.getCount(source, target); 
           }
-          j = -1;
-          for(String target : targetWords){
-            j++;
+          i = -1;
+          for(String source : sourceWords){
+            i++;
             double delta = (qCounter.getCount("#"+i+","+targetWords.size()+","+sourceWords.size()+"#", "#"+j+"#")*tCounter.getCount(source, target))/deltDenom;
-            parallelCounts.incrementCount(source, target, delta);
-            if(i == 0) targetWordCounts.incrementCount(target, delta);
-            conditionalAlignmentCounts.incrementCount("#"+i+","+targetWords.size()+","+sourceWords.size()+"#", "#"+j+"#", delta);
-            alignmentCounts.incrementCount("#"+i+","+targetWords.size()+","+sourceWords.size()+"#", delta);
+            if(Double.isNaN(delta)) delta = 0;
+            newTCounter.incrementCount(source, target, delta);
+            newQCounter.incrementCount("#"+i+","+targetWords.size()+","+sourceWords.size()+"#", "#"+j+"#", delta);
           }
         }
         String source = "#NULL#";
-        i = -1;
+        int h = -1;
         double deltDenom = 0;
-          int j = -1;
+          int k = -1;
           for(String target : targetWords){
-            j++;
-            deltDenom += qCounter.getCount("#"+i+","+targetWords.size()+","+sourceWords.size()+"#", "#"+j+"#")*tCounter.getCount(source, target); 
+            k++;
+            deltDenom += qCounter.getCount("#"+k+","+targetWords.size()+","+sourceWords.size()+"#", "#"+h+"#")*tCounter.getCount(source, target); 
           }
-          j = -1;
+          k = -1;
           for(String target : targetWords){
-            j++;
-            double delta = (qCounter.getCount("#"+i+","+targetWords.size()+","+sourceWords.size()+"#", "#"+j+"#")*tCounter.getCount(source, target))/deltDenom;
-            parallelCounts.incrementCount(source, target, delta);
-            conditionalAlignmentCounts.incrementCount("#"+i+","+targetWords.size()+","+sourceWords.size()+"#", "#"+j+"#", delta);
-            alignmentCounts.incrementCount("#"+i+","+targetWords.size()+","+sourceWords.size()+"#", delta);
+            k++;
+            double delta = (qCounter.getCount("#"+k+","+targetWords.size()+","+sourceWords.size()+"#", "#"+h+"#")*tCounter.getCount(source, target))/deltDenom;
+            if(Double.isNaN(delta)) delta = 0;
+            newTCounter.incrementCount(source, target, delta);
+            newQCounter.incrementCount("#"+k+","+targetWords.size()+","+sourceWords.size()+"#", "#"+h+"#", delta);
           }
       }
-      // parallelCounts = Counters.conditionalNormalize(parallelCounts);
-      // targetWordCounts = Counters.normalize(targetWordCounts);
-      int numCounts = 0;
-      double difference = 0;
-      // for(String source : allSources){
-      //   for(String target : allTargets){
-      //     numCounts++;
-      //     double val = parallelCounts.getCount(source, target)/targetWordCounts.getCount(target);
-      //     double oldVal = tCounter.getCount(source,target);
-      //     difference += Math.abs(val - oldVal);
-      //     if(val > 0 || tCounter.getCount(source, target) != 0) tCounter.setCount(source, target, val);
-      //   }
-      // }
-      
-      for(int m : sourceLengths){
-        for(int l : targetLengths){
-          for(int i = -1; i <= m; i++){
-            for(int j = 0; j <= l; j++){
-              numCounts++;
-              double oldVal = tCounter.getCount("#"+i+","+l+","+m+"#", "#"+j+"#");
-              double val = conditionalAlignmentCounts.getCount("#"+i+","+l+","+m+"#", "#"+j+"#")/alignmentCounts.getCount("#"+i+","+l+","+m+"#");
-              difference += Math.abs(val - oldVal);
-              if(val > 0 || qCounter.getCount("#"+i+","+l+","+m+"#", "#"+j+"#") != 0) qCounter.setCount("#"+i+","+l+","+m+"#", "#"+j+"#", val);
-            }
-          }
-        }
-      }
-      //tCounter = Counters.conditionalNormalize(tCounter);
-      if(difference/numCounts <= 0.001) {
-        return;
-      }
+
+      tCounter = newTCounter;
+      tCounter = Counters.conditionalNormalize(tCounter);
+      qCounter = newQCounter;
+      qCounter = Counters.conditionalNormalize(qCounter);
     }
   }
 
@@ -144,29 +116,18 @@ public class IBMModel2 implements WordAligner {
     for(int iter = 0; iter < 50; iter++)
     {
       System.out.println(iter);
-      parallelCounts = new CounterMap<String,String>();
-      targetWordCounts = new Counter<String>();
-      conditionalAlignmentCounts = new CounterMap<String,String>();
-      alignmentCounts = new Counter<String>();
+      CounterMap<String, String> newTCounter = new CounterMap<String,String>();
       for(SentencePair pair : trainingPairs){
         List<String> targetWords = pair.getTargetWords();
         List<String> sourceWords = pair.getSourceWords();
-        // sourceWords.add("#{{{null}}}");
-        int i = -1;
-        for(String source : sourceWords){
-          i++;
+        for(String target : targetWords){
           double deltDenom = 0;
-          for(String target : targetWords){
+          for(String source : sourceWords){
             deltDenom += tCounter.getCount(source, target); 
           }
-          int j = -1;
-          for(String target : targetWords){
-            j++;
+          for(String source : sourceWords){
             double delta = tCounter.getCount(source, target)/deltDenom;
-            parallelCounts.incrementCount(source, target, delta);
-            if(i == 0) targetWordCounts.incrementCount(target, delta);
-            //conditionalAlignmentCounts.incrementCount("#"+i+","+targetWords.size()+","+sourceWords.size()+"#", "#"+j+"#", delta);
-            //alignmentCounts.incrementCount("#"+i+","+targetWords.size()+","+sourceWords.size()+"#", delta);
+            newTCounter.incrementCount(source, target, delta);
           }
         }
         String source = "#NULL#";
@@ -174,45 +135,24 @@ public class IBMModel2 implements WordAligner {
         for(String target : targetWords){
           deltDenom += tCounter.getCount(source, target); 
         }
-        int j = -1;
         for(String target : targetWords){
-          j++;
           double delta = tCounter.getCount(source, target)/deltDenom;
-          parallelCounts.incrementCount(source, target, delta);
-          //conditionalAlignmentCounts.incrementCount("#"+i+","+targetWords.size()+","+sourceWords.size()+"#", "#"+j+"#", delta);
-          //alignmentCounts.incrementCount("#"+i+","+targetWords.size()+","+sourceWords.size()+"#", delta);
+          newTCounter.incrementCount(source, target, delta);
         }
       }
-      // parallelCounts = Counters.conditionalNormalize(parallelCounts);
-      // targetWordCounts = Counters.normalize(targetWordCounts);
-      double difference = 0;
-      int numCounts = 0;
-      for(String source : allSources){
-        for(String target : allTargets){
-          numCounts++;
-          double val = parallelCounts.getCount(source, target)/targetWordCounts.getCount(target);
-
-          double oldVal = tCounter.getCount(source,target);
-          difference += Math.abs(val - oldVal);
-          if(val > 0 || tCounter.getCount(source, target) != 0) tCounter.setCount(source, target, val);
-        }
-      }
-
-      //tCounter = Counters.conditionalNormalize(tCounter);
-      if(difference/numCounts <= 0.0001) {
-        return;
-      }
+      newTCounter = Counters.conditionalNormalize(newTCounter);
+      tCounter = newTCounter;
     }
   }
 
   public void initializeQT(List<SentencePair> trainingPairs){
     tCounter = new CounterMap<String,String>();
-    qCounter = new CounterMap<String,String>();
     for(SentencePair pair : trainingPairs){
       List<String> targetWords = pair.getTargetWords();
       List<String> sourceWords = pair.getSourceWords();
-      sourceLengths.add(sourceWords.size());
+
       targetLengths.add(targetWords.size());
+      sourceLengths.add(sourceWords.size());
 
       allSources.add("#NULL#");
       for (String source : sourceWords) {
@@ -226,30 +166,19 @@ public class IBMModel2 implements WordAligner {
       for (String target : allTargets) {
         tCounter.setCount("#NULL#", target, 1.0);
       }
-
-      // for(String source : sourceWords){
-      //   allSources.add(source);
-      // }
-      // allSources.add("#NULL#");
-      // for(String target : targetWords){
-      //   allTargets.add(target);
-      // }
     }
 
-    for(int m : sourceLengths){
-      for(int l : targetLengths){
-        for(int i = -1; i <= m; i++){
-          for(int j = 0; j <= l; j++){
-            qCounter.setCount("#"+i+","+l+","+m+"#", "#"+j+"#", 1.0);
+    qCounter = new CounterMap<String,String>();
+    for(int m : targetLengths){
+      for(int l : sourceLengths){
+        for(int i = 0; i < m; i++){
+          for(int j = -1; j < l; j++){
+            qCounter.setCount("#"+i+","+l+","+m+"#", "#"+j+"#", Math.random());
           }
         }
       }
     }
-    // for(String source : allSources){
-    //   for(String target : allTargets){
-    //     tCounter.setCount(source, target, 1.0);
-    //   }
-    // }
-    // tCounter = Counters.conditionalNormalize(tCounter);
+    tCounter = Counters.conditionalNormalize(tCounter);
+    qCounter = Counters.conditionalNormalize(qCounter);
   }
 }

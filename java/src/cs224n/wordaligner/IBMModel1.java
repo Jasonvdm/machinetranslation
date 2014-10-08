@@ -46,7 +46,7 @@ public class IBMModel1 implements WordAligner {
 
   public void train(List<SentencePair> trainingPairs) {
     initializeT(trainingPairs);
-    for(int iter = 0; iter < 100; iter++)
+    for(int iter = 0; iter < 50; iter++)
     {
       System.out.println(iter);
       CounterMap<String, String> newTCounter = new CounterMap<String,String>();
@@ -58,10 +58,9 @@ public class IBMModel1 implements WordAligner {
           for(String source : sourceWords){
             deltDenom += tCounter.getCount(source, target); 
           }
-          for(String target : targetWords){
+          for(String source : sourceWords){
             double delta = tCounter.getCount(source, target)/deltDenom;
-            //conditionalAlignmentCounts.incrementCount("#"+i+","+targetWords.size()+","+sourceWords.size()+"#", "#"+j+"#", delta);
-            //alignmentCounts.incrementCount("#"+i+","+targetWords.size()+","+sourceWords.size()+"#", delta);
+            newTCounter.incrementCount(source, target, delta);
           }
         }
         String source = "#NULL#";
@@ -69,34 +68,13 @@ public class IBMModel1 implements WordAligner {
         for(String target : targetWords){
           deltDenom += tCounter.getCount(source, target); 
         }
-        int j = -1;
         for(String target : targetWords){
-          j++;
           double delta = tCounter.getCount(source, target)/deltDenom;
-          parallelCounts.incrementCount(source, target, delta);
-          //conditionalAlignmentCounts.incrementCount("#"+i+","+targetWords.size()+","+sourceWords.size()+"#", "#"+j+"#", delta);
-          //alignmentCounts.incrementCount("#"+i+","+targetWords.size()+","+sourceWords.size()+"#", delta);
+          newTCounter.incrementCount(source, target, delta);
         }
       }
-      // parallelCounts = Counters.conditionalNormalize(parallelCounts);
-      // targetWordCounts = Counters.normalize(targetWordCounts);
-      double difference = 0;
-      int numCounts = 0;
-      for(String source : allSources){
-        for(String target : allTargets){
-          numCounts++;
-          double val = parallelCounts.getCount(source, target)/targetWordCounts.getCount(target);
-
-          double oldVal = tCounter.getCount(source,target);
-          difference += Math.abs(val - oldVal);
-          if(val > 0 || tCounter.getCount(source, target) != 0) tCounter.setCount(source, target, val);
-        }
-      }
-      tCounter = Counters.conditionalNormalize(tCounter);
-      //tCounter = Counters.conditionalNormalize(tCounter);
-      if(difference/numCounts <= 0.0005) {
-        return;
-      }
+      newTCounter = Counters.conditionalNormalize(newTCounter);
+      tCounter = newTCounter;
     }
   }
 
@@ -118,20 +96,7 @@ public class IBMModel1 implements WordAligner {
       for (String target : allTargets) {
         tCounter.setCount("#NULL#", target, 1.0);
       }
-
-      // for(String source : sourceWords){
-      //   allSources.add(source);
-      // }
-      // allSources.add("#NULL#");
-      // for(String target : targetWords){
-      //   allTargets.add(target);
-      // }
     }
-    // for(String source : allSources){
-    //   for(String target : allTargets){
-    //     tCounter.setCount(source, target, 1.0);
-    //   }
-    // }
     tCounter = Counters.conditionalNormalize(tCounter);
   }
 }
