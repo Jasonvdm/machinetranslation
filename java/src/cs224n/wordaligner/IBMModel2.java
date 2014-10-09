@@ -82,8 +82,10 @@ public class IBMModel2 implements WordAligner {
             i++;
             double delta = (qCounter.getCount("#"+i+","+sourceWords.size()+","+targetWords.size()+"#", "#"+j+"#")*tCounter.getCount(source, target))/deltDenom;
             if(Double.isNaN(delta)) delta = 0;
-            newTCounter.incrementCount(source, target, delta);
-            newQCounter.incrementCount("#"+i+","+sourceWords.size()+","+targetWords.size()+"#", "#"+j+"#", delta);
+            if(delta != 0) {
+              newTCounter.incrementCount(source, target, delta);
+              newQCounter.incrementCount("#"+i+","+sourceWords.size()+","+targetWords.size()+"#", "#"+j+"#", delta);
+            }
           }
         }
         String source = "#NULL#";
@@ -99,8 +101,10 @@ public class IBMModel2 implements WordAligner {
             k++;
             double delta = (qCounter.getCount("#"+h+","+sourceWords.size()+","+targetWords.size()+"#", "#"+k+"#")*tCounter.getCount(source, target))/deltDenom;
             if(Double.isNaN(delta)) delta = 0;
-            newTCounter.incrementCount(source, target, delta);
-            newQCounter.incrementCount("#"+h+","+sourceWords.size()+","+targetWords.size()+"#", "#"+k+"#", delta);
+            if(delta != 0) {
+              newTCounter.incrementCount(source, target, delta);
+              newQCounter.incrementCount("#"+h+","+sourceWords.size()+","+targetWords.size()+"#", "#"+k+"#", delta);
+            }
           }
       }
 
@@ -127,7 +131,7 @@ public class IBMModel2 implements WordAligner {
           }
           for(String source : sourceWords){
             double delta = tCounter.getCount(source, target)/deltDenom;
-            newTCounter.incrementCount(source, target, delta);
+            if(delta != 0) newTCounter.incrementCount(source, target, delta);
           }
         }
         String source = "#NULL#";
@@ -137,7 +141,7 @@ public class IBMModel2 implements WordAligner {
         }
         for(String target : targetWords){
           double delta = tCounter.getCount(source, target)/deltDenom;
-          newTCounter.incrementCount(source, target, delta);
+          if(delta != 0) newTCounter.incrementCount(source, target, delta);
         }
       }
       newTCounter = Counters.conditionalNormalize(newTCounter);

@@ -45,7 +45,7 @@ public class IBMModel1 implements WordAligner {
   }
 
   public void train(List<SentencePair> trainingPairs) {
-    initializeT(trainingPairs);
+    //initializeT(trainingPairs);
     for(int iter = 0; iter < 15; iter++)
     {
       System.out.println(iter);
@@ -56,21 +56,27 @@ public class IBMModel1 implements WordAligner {
         for(String target : targetWords){
           double deltDenom = 0;
           for(String source : sourceWords){
-            deltDenom += tCounter.getCount(source, target); 
+            if(iter == 0) deltDenom += 1;
+            else deltDenom += tCounter.getCount(source, target); 
           }
           for(String source : sourceWords){
-            double delta = tCounter.getCount(source, target)/deltDenom;
-            newTCounter.incrementCount(source, target, delta);
+            double delta;
+            if(iter == 0) delta = 1/deltDenom;
+            else delta = tCounter.getCount(source, target)/deltDenom;
+            if(delta != 0) newTCounter.incrementCount(source, target, delta);
           }
         }
         String source = "#NULL#";
         double deltDenom = 0;
         for(String target : targetWords){
-          deltDenom += tCounter.getCount(source, target); 
+          if(iter == 0) deltDenom += 1;
+          else deltDenom += tCounter.getCount(source, target);  
         }
         for(String target : targetWords){
-          double delta = tCounter.getCount(source, target)/deltDenom;
-          newTCounter.incrementCount(source, target, delta);
+          double delta;
+          if(iter == 0) delta = 1/deltDenom;
+          else delta = tCounter.getCount(source, target)/deltDenom;
+          if(delta != 0) newTCounter.incrementCount(source, target, delta);
         }
       }
       newTCounter = Counters.conditionalNormalize(newTCounter);
