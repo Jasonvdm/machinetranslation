@@ -46,7 +46,7 @@ public class IBMModel1 implements WordAligner {
 
   public void train(List<SentencePair> trainingPairs) {
     initializeT(trainingPairs);
-    for(int iter = 0; iter < 50; iter++)
+    for(int iter = 0; iter < 15; iter++)
     {
       System.out.println(iter);
       CounterMap<String, String> newTCounter = new CounterMap<String,String>();
@@ -80,7 +80,10 @@ public class IBMModel1 implements WordAligner {
 
   public void initializeT(List<SentencePair> trainingPairs){
     tCounter = new CounterMap<String,String>();
+    int iterations = 0;
     for(SentencePair pair : trainingPairs){
+      if(iterations%1000 == 0) System.out.println("Training sentence: "+iterations);
+      iterations ++;
       List<String> targetWords = pair.getTargetWords();
       List<String> sourceWords = pair.getSourceWords();
 

@@ -60,7 +60,7 @@ public class IBMModel2 implements WordAligner {
 
   public void train(List<SentencePair> trainingPairs) {
     trainT(trainingPairs);
-    for(int iter = 0; iter < 50; iter++)
+    for(int iter = 0; iter < 20; iter++)
     {
       System.out.println(iter);
       CounterMap<String, String> newTCounter = new CounterMap<String,String>();
@@ -113,7 +113,7 @@ public class IBMModel2 implements WordAligner {
 
   public void trainT(List<SentencePair> trainingPairs) {
     initializeQT(trainingPairs);
-    for(int iter = 0; iter < 50; iter++)
+    for(int iter = 0; iter < 15; iter++)
     {
       System.out.println(iter);
       CounterMap<String, String> newTCounter = new CounterMap<String,String>();
@@ -147,7 +147,10 @@ public class IBMModel2 implements WordAligner {
 
   public void initializeQT(List<SentencePair> trainingPairs){
     tCounter = new CounterMap<String,String>();
+    int iterations = 0;
     for(SentencePair pair : trainingPairs){
+      if(iterations%1000 == 0) System.out.println("Training T sentence: "+iterations);
+      iterations ++;
       List<String> targetWords = pair.getTargetWords();
       List<String> sourceWords = pair.getSourceWords();
 
@@ -169,10 +172,13 @@ public class IBMModel2 implements WordAligner {
     }
 
     qCounter = new CounterMap<String,String>();
+    iterations = 0;
     for(int m : targetLengths){
       for(int l : sourceLengths){
         for(int i = 0; i < m; i++){
           for(int j = -1; j < l; j++){
+            if(iterations%1000 == 0) System.out.println("Training Q sentence: "+iterations);
+            iterations ++;
             qCounter.setCount("#"+j+","+l+","+m+"#"    ,    "#"+i+"#"   ,  1.0);
           }
         }

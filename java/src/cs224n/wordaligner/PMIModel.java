@@ -53,7 +53,10 @@ public class PMIModel implements WordAligner {
     parallelCounts = new CounterMap<String,String>();
     sourceWordCounts = new Counter<String>();
 
+    int iterations = 0;
     for(SentencePair pair : trainingPairs){
+      if(iterations%1000 == 0) System.out.println("Training sentence: "+iterations);
+      iterations ++;
       sourceWordCounts.incrementCount("#NULL#", 1.0);
       List<String> targetWords = pair.getTargetWords();
       List<String> sourceWords = pair.getSourceWords();
