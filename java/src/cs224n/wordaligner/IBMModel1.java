@@ -83,29 +83,4 @@ public class IBMModel1 implements WordAligner {
       tCounter = newTCounter;
     }
   }
-
-  public void initializeT(List<SentencePair> trainingPairs){
-    tCounter = new CounterMap<String,String>();
-    int iterations = 0;
-    for(SentencePair pair : trainingPairs){
-      if(iterations%1000 == 0) System.out.println("Training sentence: "+iterations);
-      iterations ++;
-      List<String> targetWords = pair.getTargetWords();
-      List<String> sourceWords = pair.getSourceWords();
-
-      allSources.add("#NULL#");
-      for (String source : sourceWords) {
-        for (String target : targetWords) {
-          allSources.add(source);
-          allTargets.add(target);
-          tCounter.setCount(source, target, 1.0);
-        }
-      }
-
-      for (String target : allTargets) {
-        tCounter.setCount("#NULL#", target, 1.0);
-      }
-    }
-    tCounter = Counters.conditionalNormalize(tCounter);
-  }
 }

@@ -75,12 +75,23 @@ public class IBMModel2 implements WordAligner {
           int i = -1;
           for(String source : sourceWords){
             i++;
-            deltDenom += qCounter.getCount("#"+i+","+sourceWords.size()+","+targetWords.size()+"#", "#"+j+"#")*tCounter.getCount(source, target); 
+            if(iter == 0) {
+              deltDenom += tCounter.getCount(source,target);
+            }
+            else {
+              deltDenom += qCounter.getCount("#"+i+","+sourceWords.size()+","+targetWords.size()+"#", "#"+j+"#")*tCounter.getCount(source, target); 
+            }
           }
           i = -1;
           for(String source : sourceWords){
             i++;
-            double delta = (qCounter.getCount("#"+i+","+sourceWords.size()+","+targetWords.size()+"#", "#"+j+"#")*tCounter.getCount(source, target))/deltDenom;
+            double delta;
+            if(iter == 0) {
+              delta = tCounter.getCount(source, target)/deltDenom;
+            }
+            else {
+              delta = (qCounter.getCount("#"+i+","+sourceWords.size()+","+targetWords.size()+"#", "#"+j+"#")*tCounter.getCount(source, target))/deltDenom;
+            }
             if(Double.isNaN(delta)) delta = 0;
             if(delta != 0) {
               newTCounter.incrementCount(source, target, delta);
@@ -94,12 +105,24 @@ public class IBMModel2 implements WordAligner {
           int k = -1;
           for(String target : targetWords){
             k++;
-            deltDenom += qCounter.getCount("#"+h+","+sourceWords.size()+","+targetWords.size()+"#", "#"+k+"#")*tCounter.getCount(source, target); 
+            if(iter == 0) {
+              deltDenom += tCounter.getCount(source,target);
+            }
+            else {
+              deltDenom += qCounter.getCount("#"+h+","+sourceWords.size()+","+targetWords.size()+"#", "#"+k+"#")*tCounter.getCount(source, target); 
+            }
+            
           }
           k = -1;
           for(String target : targetWords){
             k++;
-            double delta = (qCounter.getCount("#"+h+","+sourceWords.size()+","+targetWords.size()+"#", "#"+k+"#")*tCounter.getCount(source, target))/deltDenom;
+            double delta;
+            if(iter == 0) {
+              delta = tCounter.getCount(source, target)/deltDenom;
+            }
+            else {
+              delta = (qCounter.getCount("#"+h+","+sourceWords.size()+","+targetWords.size()+"#", "#"+k+"#")*tCounter.getCount(source, target))/deltDenom;
+            } 
             if(Double.isNaN(delta)) delta = 0;
             if(delta != 0) {
               newTCounter.incrementCount(source, target, delta);
@@ -116,7 +139,7 @@ public class IBMModel2 implements WordAligner {
   }
 
   public void trainT(List<SentencePair> trainingPairs) {
-    initializeQT(trainingPairs);
+    //initializeQT(trainingPairs);
     for(int iter = 0; iter < 15; iter++)
     {
       System.out.println(iter);
@@ -127,20 +150,26 @@ public class IBMModel2 implements WordAligner {
         for(String target : targetWords){
           double deltDenom = 0;
           for(String source : sourceWords){
-            deltDenom += tCounter.getCount(source, target); 
+            if(iter == 0) deltDenom += 1;
+            else deltDenom += tCounter.getCount(source, target); 
           }
           for(String source : sourceWords){
-            double delta = tCounter.getCount(source, target)/deltDenom;
+            double delta;
+            if(iter == 0) delta = 1/deltDenom;
+            else delta = tCounter.getCount(source, target)/deltDenom;
             if(delta != 0) newTCounter.incrementCount(source, target, delta);
           }
         }
         String source = "#NULL#";
         double deltDenom = 0;
         for(String target : targetWords){
-          deltDenom += tCounter.getCount(source, target); 
+          if(iter == 0) deltDenom += 1;
+          else deltDenom += tCounter.getCount(source, target);  
         }
         for(String target : targetWords){
-          double delta = tCounter.getCount(source, target)/deltDenom;
+          double delta;
+          if(iter == 0) delta = 1/deltDenom;
+          else delta = tCounter.getCount(source, target)/deltDenom;
           if(delta != 0) newTCounter.incrementCount(source, target, delta);
         }
       }
@@ -149,46 +178,46 @@ public class IBMModel2 implements WordAligner {
     }
   }
 
-  public void initializeQT(List<SentencePair> trainingPairs){
-    tCounter = new CounterMap<String,String>();
-    int iterations = 0;
-    for(SentencePair pair : trainingPairs){
-      if(iterations%1000 == 0) System.out.println("Training T sentence: "+iterations);
-      iterations ++;
-      List<String> targetWords = pair.getTargetWords();
-      List<String> sourceWords = pair.getSourceWords();
+  // public void initializeQT(List<SentencePair> trainingPairs){
+  //   tCounter = new CounterMap<String,String>();
+  //   int iterations = 0;
+  //   for(SentencePair pair : trainingPairs){
+  //     if(iterations%1000 == 0) System.out.println("Training T sentence: "+iterations);
+  //     iterations ++;
+  //     List<String> targetWords = pair.getTargetWords();
+  //     List<String> sourceWords = pair.getSourceWords();
 
-      targetLengths.add(targetWords.size());
-      sourceLengths.add(sourceWords.size());
+  //     targetLengths.add(targetWords.size());
+  //     sourceLengths.add(sourceWords.size());
 
-      allSources.add("#NULL#");
-      for (String source : sourceWords) {
-        for (String target : targetWords) {
-          allSources.add(source);
-          allTargets.add(target);
-          tCounter.setCount(source, target, 1.0);
-        }
-      }
+  //     allSources.add("#NULL#");
+  //     for (String source : sourceWords) {
+  //       for (String target : targetWords) {
+  //         allSources.add(source);
+  //         allTargets.add(target);
+  //         tCounter.setCount(source, target, 1.0);
+  //       }
+  //     }
 
-      for (String target : allTargets) {
-        tCounter.setCount("#NULL#", target, 1.0);
-      }
-    }
+  //     for (String target : allTargets) {
+  //       tCounter.setCount("#NULL#", target, 1.0);
+  //     }
+  //   }
 
-    qCounter = new CounterMap<String,String>();
-    iterations = 0;
-    for(int m : targetLengths){
-      for(int l : sourceLengths){
-        for(int i = 0; i < m; i++){
-          for(int j = -1; j < l; j++){
-            if(iterations%1000 == 0) System.out.println("Training Q sentence: "+iterations);
-            iterations ++;
-            qCounter.setCount("#"+j+","+l+","+m+"#"    ,    "#"+i+"#"   ,  1.0);
-          }
-        }
-      }
-    }
-    tCounter = Counters.conditionalNormalize(tCounter);
-    qCounter = Counters.conditionalNormalize(qCounter);
-  }
+  //   qCounter = new CounterMap<String,String>();
+  //   iterations = 0;
+  //   for(int m : targetLengths){
+  //     for(int l : sourceLengths){
+  //       for(int i = 0; i < m; i++){
+  //         for(int j = -1; j < l; j++){
+  //           if(iterations%1000 == 0) System.out.println("Training Q sentence: "+iterations);
+  //           iterations ++;
+  //           qCounter.setCount("#"+j+","+l+","+m+"#"    ,    "#"+i+"#"   ,  1.0);
+  //         }
+  //       }
+  //     }
+  //   }
+  //   tCounter = Counters.conditionalNormalize(tCounter);
+  //   qCounter = Counters.conditionalNormalize(qCounter);
+  // }
 }
