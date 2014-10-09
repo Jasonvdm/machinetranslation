@@ -34,8 +34,8 @@ public class IBMModel2 implements WordAligner {
     List<String> targetWords = sentencePair.getTargetWords();
     List<String> sourceWords = sentencePair.getSourceWords();
     int targetIndex = 0;
-    int m = sourceWords.size();
-    int l = targetWords.size();
+    int m = targetWords.size();
+    int l = sourceWords.size();
     int j = -1;
     for (String target : targetWords) {
       j++;
@@ -75,15 +75,15 @@ public class IBMModel2 implements WordAligner {
           int i = -1;
           for(String source : sourceWords){
             i++;
-            deltDenom += qCounter.getCount("#"+i+","+targetWords.size()+","+sourceWords.size()+"#", "#"+j+"#")*tCounter.getCount(source, target); 
+            deltDenom += qCounter.getCount("#"+i+","+sourceWords.size()+","+targetWords.size()+"#", "#"+j+"#")*tCounter.getCount(source, target); 
           }
           i = -1;
           for(String source : sourceWords){
             i++;
-            double delta = (qCounter.getCount("#"+i+","+targetWords.size()+","+sourceWords.size()+"#", "#"+j+"#")*tCounter.getCount(source, target))/deltDenom;
+            double delta = (qCounter.getCount("#"+i+","+sourceWords.size()+","+targetWords.size()+"#", "#"+j+"#")*tCounter.getCount(source, target))/deltDenom;
             if(Double.isNaN(delta)) delta = 0;
             newTCounter.incrementCount(source, target, delta);
-            newQCounter.incrementCount("#"+i+","+targetWords.size()+","+sourceWords.size()+"#", "#"+j+"#", delta);
+            newQCounter.incrementCount("#"+i+","+sourceWords.size()+","+targetWords.size()+"#", "#"+j+"#", delta);
           }
         }
         String source = "#NULL#";
@@ -92,15 +92,15 @@ public class IBMModel2 implements WordAligner {
           int k = -1;
           for(String target : targetWords){
             k++;
-            deltDenom += qCounter.getCount("#"+k+","+targetWords.size()+","+sourceWords.size()+"#", "#"+h+"#")*tCounter.getCount(source, target); 
+            deltDenom += qCounter.getCount("#"+h+","+sourceWords.size()+","+targetWords.size()+"#", "#"+k+"#")*tCounter.getCount(source, target); 
           }
           k = -1;
           for(String target : targetWords){
             k++;
-            double delta = (qCounter.getCount("#"+k+","+targetWords.size()+","+sourceWords.size()+"#", "#"+h+"#")*tCounter.getCount(source, target))/deltDenom;
+            double delta = (qCounter.getCount("#"+h+","+sourceWords.size()+","+targetWords.size()+"#", "#"+k+"#")*tCounter.getCount(source, target))/deltDenom;
             if(Double.isNaN(delta)) delta = 0;
             newTCounter.incrementCount(source, target, delta);
-            newQCounter.incrementCount("#"+k+","+targetWords.size()+","+sourceWords.size()+"#", "#"+h+"#", delta);
+            newQCounter.incrementCount("#"+h+","+sourceWords.size()+","+targetWords.size()+"#", "#"+k+"#", delta);
           }
       }
 
@@ -173,7 +173,7 @@ public class IBMModel2 implements WordAligner {
       for(int l : sourceLengths){
         for(int i = 0; i < m; i++){
           for(int j = -1; j < l; j++){
-            qCounter.setCount("#"+i+","+l+","+m+"#", "#"+j+"#", Math.random());
+            qCounter.setCount("#"+j+","+l+","+m+"#"    ,    "#"+i+"#"   ,  1.0);
           }
         }
       }
